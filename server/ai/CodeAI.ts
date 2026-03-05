@@ -118,10 +118,27 @@ export class CodeAI {
       }
     }
 
-    // Mafia: consider revealing if advantageous (low health enemies, have attack cards)
+    // Mafia: consider revealing if advantageous
     if (player.role === 'mafia' && !player.isIdentityRevealed) {
       const attackCards = hand.filter(c => CARD_DEFS[c.cardId].type === 'attack');
-      if (attackCards.length >= 3 && Math.random() < 0.3) {
+      const alivePlayers = view.players.filter(p => p.isAlive);
+      const police = alivePlayers.find(p => p.role === 'police');
+      const aliveCount = alivePlayers.length;
+
+      // High priority: reveal to attack low-health police (strategic kill)
+      if (police && police.health <= 2 && attackCards.length >= 1) {
+        if (Math.random() < 0.8) {
+          return { type: 'reveal_identity', playerId: player.id };
+        }
+      }
+
+      // Medium priority: have enough attack cards to be dangerous
+      if (attackCards.length >= 2 && Math.random() < 0.5) {
+        return { type: 'reveal_identity', playerId: player.id };
+      }
+
+      // Late game: fewer players alive, more aggressive play
+      if (aliveCount <= 3 && attackCards.length >= 1 && Math.random() < 0.6) {
         return { type: 'reveal_identity', playerId: player.id };
       }
     }
@@ -150,10 +167,15 @@ export class CodeAI {
       }
     }
 
-    // Disrupt
+    // Disrupt (only mafia can target police with interference cards)
     const disruptCard = this.findCard(hand, ['arrest', 'seize', 'search']);
     if (disruptCard) {
-      const targets = view.players.filter(p => p.id !== player.id && p.isAlive);
+      const targets = view.players.filter(p => {
+        if (p.id === player.id || !p.isAlive) return false;
+        // Only mafia can use interference cards against police
+        if (p.role === 'police' && player.role !== 'mafia') return false;
+        return true;
+      });
       if (targets.length > 0) {
         const target = this.pickRandom(targets);
 

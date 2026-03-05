@@ -477,6 +477,11 @@ export class GameEngine {
   private executeArrest(player: Player, target?: Player): { success: boolean; error?: string } {
     if (!target || !target.isAlive) return { success: false, error: 'Invalid target' };
 
+    // Only mafia can use interference cards against police
+    if (target.role === 'police' && player.role !== 'mafia') {
+      return { success: false, error: 'Only mafia can use interference cards against police' };
+    }
+
     target.isArrested = true;
 
     this.emit('arrest_applied', player.id, target.id, {
@@ -490,6 +495,11 @@ export class GameEngine {
   private executeSeize(player: Player, target?: Player, targetCardInstanceId?: string): { success: boolean; error?: string } {
     if (!target || !target.isAlive) return { success: false, error: 'Invalid target' };
     if (!targetCardInstanceId) return { success: false, error: 'Must specify card to seize' };
+
+    // Only mafia can use interference cards against police
+    if (target.role === 'police' && player.role !== 'mafia') {
+      return { success: false, error: 'Only mafia can use interference cards against police' };
+    }
 
     const cardIdx = target.hand.findIndex(
       c => c.instanceId === targetCardInstanceId && CARD_DEFS[c.cardId].isPublic
@@ -509,6 +519,11 @@ export class GameEngine {
 
   private executeSearch(player: Player, target?: Player): { success: boolean; error?: string } {
     if (!target || !target.isAlive) return { success: false, error: 'Invalid target' };
+
+    // Only mafia can use interference cards against police
+    if (target.role === 'police' && player.role !== 'mafia') {
+      return { success: false, error: 'Only mafia can use interference cards against police' };
+    }
 
     const hiddenCards = target.hand.filter(c => !CARD_DEFS[c.cardId].isPublic);
     if (hiddenCards.length === 0) return { success: false, error: 'Target has no hidden cards' };
