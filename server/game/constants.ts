@@ -113,3 +113,6 @@ export const CARDS_PER_DRAW = 2;
 export const MAFIA_REVEAL_DRAW = 2;
 export const MAFIA_KILL_HEAL = 1;
 export const MAFIA_KILL_DRAW = 2;
+
+// Turn timer
+export const TURN_TIME_LIMIT = 60000; // 60 seconds per action

@@ -15,6 +15,7 @@ import { createProvider } from './ai/providerFactory.js';
 import { saveGameRecord } from './db/history.js';
 import { getDb } from './db/index.js';
 import historyRouter from './routes/history.js';
+import { TURN_TIME_LIMIT } from './game/constants.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '3002');
@@ -47,6 +48,9 @@ const socketPlayerMap = new Map<string, { gameId: string; playerId: string | nul
 
 // AI turn concurrency guard
 const aiRunning = new Set<string>();
+
+// Turn timers for human players
+const turnTimers = new Map<string, NodeJS.Timeout>();
 
 // Initialize DB
 getDb();
@@ -89,10 +93,12 @@ io.on('connection', (socket) => {
     // Send initial state
     broadcastState(gameId);
 
-    // If first player is AI, trigger their turn
+    // If first player is AI, trigger their turn; otherwise start timer
     const currentType = engine.getCurrentPlayerType();
     if (currentType.type !== 'human') {
       setTimeout(() => processAITurn(gameId), 1000);
+    } else {
+      startTurnTimer(gameId);
     }
   });
 
@@ -156,14 +162,18 @@ io.on('connection', (socket) => {
 
     // Check if game over
     if (game.engine.isGameOver()) {
+      clearTurnTimer(currentGameId);
       handleGameOver(currentGameId);
       return;
     }
 
-    // If next player is AI, trigger their turn
+    // If next player is AI, trigger their turn; otherwise restart timer
     const currentType = game.engine.getCurrentPlayerType();
     if (currentType.type !== 'human') {
+      clearTurnTimer(currentGameId);
       setTimeout(() => processAITurn(currentGameId!), 500);
+    } else {
+      startTurnTimer(currentGameId);
     }
   });
 
@@ -207,14 +217,17 @@ async function processAITurn(gameId: string): Promise<void> {
     broadcastState(gameId);
 
     if (engine.isGameOver()) {
+      clearTurnTimer(gameId);
       handleGameOver(gameId);
       return;
     }
 
-    // Continue with next AI player
+    // Continue with next AI player or start human timer
     const nextType = engine.getCurrentPlayerType();
     if (nextType.type !== 'human') {
       setTimeout(() => processAITurn(gameId), delay);
+    } else {
+      startTurnTimer(gameId);
     }
   } finally {
     aiRunning.delete(gameId);
@@ -334,6 +347,67 @@ async function processLLMAITurn(
   }
 }
 
+// ===== Turn Timer =====
+
+function startTurnTimer(gameId: string): void {
+  clearTurnTimer(gameId);
+  const game = games.get(gameId);
+  if (!game || game.engine.isGameOver()) return;
+
+  const currentType = game.engine.getCurrentPlayerType();
+  if (currentType.type !== 'human') return; // AI doesn't need timer
+
+  const deadline = Date.now() + TURN_TIME_LIMIT;
+  io.to(gameId).emit('game:turn_timer', deadline);
+
+  turnTimers.set(gameId, setTimeout(() => {
+    forceAdvanceTurn(gameId);
+  }, TURN_TIME_LIMIT));
+}
+
+function clearTurnTimer(gameId: string): void {
+  const timer = turnTimers.get(gameId);
+  if (timer) {
+    clearTimeout(timer);
+    turnTimers.delete(gameId);
+  }
+  io.to(gameId).emit('game:turn_timer', 0);
+}
+
+function forceAdvanceTurn(gameId: string): void {
+  const game = games.get(gameId);
+  if (!game || game.engine.isGameOver()) return;
+
+  const playerId = game.engine.getCurrentPlayerId();
+  const phase = game.engine.getPhase();
+
+  // Auto-advance based on current phase
+  if (phase === 'chat') {
+    game.engine.processAction({ type: 'skip_chat', playerId });
+  }
+  if (game.engine.getPhase() === 'draw') {
+    game.engine.processAction({ type: 'draw_cards', playerId });
+  }
+  if (game.engine.getPhase() === 'use_cards') {
+    game.engine.processAction({ type: 'end_turn', playerId });
+  }
+
+  broadcastState(gameId);
+
+  if (game.engine.isGameOver()) {
+    handleGameOver(gameId);
+    return;
+  }
+
+  // Continue with next player
+  const nextType = game.engine.getCurrentPlayerType();
+  if (nextType.type !== 'human') {
+    setTimeout(() => processAITurn(gameId), 500);
+  } else {
+    startTurnTimer(gameId);
+  }
+}
+
 // ===== Helpers =====
 
 function broadcastState(gameId: string): void {
@@ -378,6 +452,7 @@ function handleGameOver(gameId: string): void {
   );
 
   // Clean up after a delay
+  clearTurnTimer(gameId);
   setTimeout(() => games.delete(gameId), 60000);
 }
 

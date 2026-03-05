@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { useSocket } from '../hooks/useSocket';
@@ -16,10 +16,27 @@ export default function Game() {
   const error = useGameStore(s => s.error);
   const setError = useGameStore(s => s.setError);
 
+  const turnDeadline = useGameStore(s => s.turnDeadline);
   const [chatInput, setChatInput] = useState('');
   const [questionTarget, setQuestionTarget] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [cardTarget, setCardTarget] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!turnDeadline) {
+      setTimeLeft(null);
+      return;
+    }
+    const update = () => {
+      const remaining = Math.max(0, Math.ceil((turnDeadline - Date.now()) / 1000));
+      setTimeLeft(remaining);
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [turnDeadline]);
 
   useEffect(() => {
     if (error) {
@@ -98,8 +115,15 @@ export default function Game() {
           <span className="mx-2 text-mafia-card">|</span>
           <span className="text-mafia-accent font-medium">{phaseLabel}</span>
         </div>
-        <div className="text-mafia-muted">
-          덱: {view.deckSize}장
+        <div className="flex items-center gap-3">
+          {timeLeft !== null && timeLeft > 0 && (
+            <span className={`font-mono font-bold ${timeLeft <= 10 ? 'text-red-400 animate-pulse' : 'text-mafia-accent'}`}>
+              {timeLeft}초
+            </span>
+          )}
+          <span className="text-mafia-muted">
+            덱: {view.deckSize}장
+          </span>
         </div>
       </div>
 

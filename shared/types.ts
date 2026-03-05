@@ -124,6 +124,7 @@ export type GameEventType =
   | 'reward_given'
   | 'penalty_applied'
   | 'turn_end'
+  | 'turn_timeout'
   | 'game_over';
 
 export interface GameEvent {
@@ -212,6 +213,7 @@ export interface ServerToClientEvents {
   'game:error': (message: string) => void;
   'game:ai_thinking': (playerId: string) => void;
   'game:ai_done': (playerId: string) => void;
+  'game:turn_timer': (deadline: number) => void;
 }
 
 export interface ClientToServerEvents {

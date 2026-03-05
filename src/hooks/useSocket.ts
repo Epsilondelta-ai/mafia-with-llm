@@ -18,7 +18,7 @@ function getSocket(): TypedSocket {
 
 export function useSocket() {
   const socketRef = useRef<TypedSocket>(getSocket());
-  const { setView, addEvent, setConnected, setAiThinking, setError } = useGameStore();
+  const { setView, addEvent, setConnected, setAiThinking, setError, setTurnDeadline } = useGameStore();
 
   useEffect(() => {
     const socket = socketRef.current;
@@ -30,6 +30,7 @@ export function useSocket() {
     socket.on('game:error', (msg) => setError(msg));
     socket.on('game:ai_thinking', (id) => setAiThinking(id));
     socket.on('game:ai_done', () => setAiThinking(null));
+    socket.on('game:turn_timer', (deadline) => setTurnDeadline(deadline));
 
     if (!socket.connected) {
       socket.connect();
@@ -43,8 +44,9 @@ export function useSocket() {
       socket.off('game:error');
       socket.off('game:ai_thinking');
       socket.off('game:ai_done');
+      socket.off('game:turn_timer');
     };
-  }, [setView, addEvent, setConnected, setAiThinking, setError]);
+  }, [setView, addEvent, setConnected, setAiThinking, setError, setTurnDeadline]);
 
   const createGame = useCallback((config: GameConfig): Promise<string> => {
     return new Promise((resolve) => {
