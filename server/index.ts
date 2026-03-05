@@ -383,14 +383,12 @@ function forceAdvanceTurn(gameId: string): void {
   const playerId = game.engine.getCurrentPlayerId();
   const phase = game.engine.getPhase();
 
-  // Auto-advance based on current phase
+  // Only advance ONE phase per timeout (timer resets after each action)
   if (phase === 'chat') {
     game.engine.processAction({ type: 'skip_chat', playerId });
-  }
-  if (game.engine.getPhase() === 'draw') {
+  } else if (phase === 'draw') {
     game.engine.processAction({ type: 'draw_cards', playerId });
-  }
-  if (game.engine.getPhase() === 'use_cards') {
+  } else if (phase === 'use_cards') {
     game.engine.processAction({ type: 'end_turn', playerId });
   }
 
@@ -401,7 +399,7 @@ function forceAdvanceTurn(gameId: string): void {
     return;
   }
 
-  // Continue with next player
+  // Continue with next player or reset timer for next phase
   const nextType = game.engine.getCurrentPlayerType();
   if (nextType.type !== 'human') {
     setTimeout(() => processAITurn(gameId), 500);
