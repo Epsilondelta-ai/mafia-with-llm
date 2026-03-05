@@ -17,7 +17,7 @@ import { getDb } from './db/index.js';
 import historyRouter from './routes/history.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = parseInt(process.env.PORT || '3001');
+const PORT = parseInt(process.env.PORT || '3002');
 
 const app = express();
 app.use(cors());
