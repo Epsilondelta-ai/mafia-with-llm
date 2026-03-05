@@ -33,6 +33,7 @@ export class GameEngine {
       chatLog: [],
       turnNumber: 0,
       turnPhaseComplete: { chat: false, draw: false },
+      pendingQuestion: null,
       winner: null,
       gameLog: [],
     };
@@ -68,7 +69,13 @@ export class GameEngine {
     }
 
     const currentPlayer = this.currentPlayer();
-    if (action.playerId !== currentPlayer.id) {
+
+    // Allow answer/refuse from question target (not current player)
+    if (this.state.pendingQuestion && (action.type === 'chat_answer' || action.type === 'chat_refuse')) {
+      if (action.playerId !== this.state.pendingQuestion.targetId) {
+        return { success: false, error: 'Not the question target' };
+      }
+    } else if (action.playerId !== currentPlayer.id) {
       return { success: false, error: 'Not your turn' };
     }
 
@@ -126,6 +133,7 @@ export class GameEngine {
       chatLog: this.state.chatLog,
       turnNumber: this.state.turnNumber,
       turnPhaseComplete: { ...this.state.turnPhaseComplete },
+      pendingQuestion: this.state.pendingQuestion,
       winner: this.state.winner,
       gameLog: this.state.gameLog,
     };
@@ -150,6 +158,14 @@ export class GameEngine {
 
   getPhase(): GamePhase {
     return this.state.phase;
+  }
+
+  getPendingQuestion() {
+    return this.state.pendingQuestion;
+  }
+
+  getPlayerById(playerId: string): Player {
+    return this.getPlayer(playerId);
   }
 
   // ===== Action Handlers =====
@@ -197,15 +213,16 @@ export class GameEngine {
       messageKo: `${player.name}이(가) ${target.name}에게 질문: "${content}"`,
     });
 
-    // Phase stays at chat - waiting for answer
-    // The answer will come as a separate action (from the target player or AI)
-    // For simplicity, we'll handle the answer flow through a pending state
-    this.state.turnPhaseComplete.chat = true;
-    this.advancePhase();
+    // Wait for answer from target player before advancing
+    this.state.pendingQuestion = { askerId: playerId, targetId: targetPlayerId, content };
     return { success: true };
   }
 
   private handleChatAnswer(playerId: string, content: string): { success: boolean; error?: string } {
+    if (!this.state.pendingQuestion || this.state.pendingQuestion.targetId !== playerId) {
+      return { success: false, error: 'No pending question for you' };
+    }
+
     const player = this.getPlayer(playerId);
     const msg: ChatMessage = {
       id: uuid(), turnNumber: this.state.turnNumber,
@@ -218,10 +235,18 @@ export class GameEngine {
       message: `${player.name} answers: "${content}"`,
       messageKo: `${player.name}의 대답: "${content}"`,
     });
+
+    this.state.pendingQuestion = null;
+    this.state.turnPhaseComplete.chat = true;
+    this.advancePhase();
     return { success: true };
   }
 
   private handleChatRefuse(playerId: string): { success: boolean; error?: string } {
+    if (!this.state.pendingQuestion || this.state.pendingQuestion.targetId !== playerId) {
+      return { success: false, error: 'No pending question for you' };
+    }
+
     const player = this.getPlayer(playerId);
     const msg: ChatMessage = {
       id: uuid(), turnNumber: this.state.turnNumber,
@@ -234,6 +259,10 @@ export class GameEngine {
       message: `${player.name} refuses to answer`,
       messageKo: `${player.name}이(가) 답변을 거부했습니다`,
     });
+
+    this.state.pendingQuestion = null;
+    this.state.turnPhaseComplete.chat = true;
+    this.advancePhase();
     return { success: true };
   }
 

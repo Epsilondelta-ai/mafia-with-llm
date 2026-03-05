@@ -75,6 +75,17 @@ export default function Game() {
     sendAction({ type: 'skip_chat', playerId: view.myPlayerId });
   };
 
+  const handleAnswer = () => {
+    if (!chatInput.trim() || !view.myPlayerId) return;
+    sendAction({ type: 'chat_answer', playerId: view.myPlayerId, content: chatInput.trim() });
+    setChatInput('');
+  };
+
+  const handleRefuse = () => {
+    if (!view.myPlayerId) return;
+    sendAction({ type: 'chat_refuse', playerId: view.myPlayerId });
+  };
+
   const handleDraw = () => {
     if (!view.myPlayerId) return;
     sendAction({ type: 'draw_cards', playerId: view.myPlayerId });
@@ -186,6 +197,32 @@ export default function Game() {
             </button>
             <button className="btn-secondary text-sm px-3" onClick={handleSkipChat}>
               건너뛰기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Answer question (when someone asks the human player) */}
+      {view.pendingQuestion && view.myPlayerId === view.pendingQuestion.targetId && (
+        <div className="card-base space-y-2 border border-mafia-accent/50">
+          <p className="text-sm text-mafia-accent font-medium">
+            {view.players.find(p => p.id === view.pendingQuestion!.askerId)?.name}의 질문: "{view.pendingQuestion.content}"
+          </p>
+          <div className="flex gap-2">
+            <input
+              className="input-field flex-1"
+              value={chatInput}
+              onChange={e => setChatInput(e.target.value)}
+              placeholder="대답을 입력..."
+              onKeyDown={e => e.key === 'Enter' && handleAnswer()}
+            />
+          </div>
+          <div className="flex gap-2">
+            <button className="btn-primary flex-1 text-sm" onClick={handleAnswer} disabled={!chatInput.trim()}>
+              대답하기
+            </button>
+            <button className="btn-secondary flex-1 text-sm" onClick={handleRefuse}>
+              답변 거부
             </button>
           </div>
         </div>

@@ -86,6 +86,12 @@ export type GamePhase =
 // ===== Game State =====
 export type GameMode = 'play' | 'spectate';
 
+export interface PendingQuestion {
+  askerId: string;
+  targetId: string;
+  content: string;
+}
+
 export interface GameState {
   id: string;
   phase: GamePhase;
@@ -100,6 +106,7 @@ export interface GameState {
     chat: boolean;
     draw: boolean;
   };
+  pendingQuestion: PendingQuestion | null;
   winner: Team | null;
   gameLog: GameEvent[];
 }
@@ -166,6 +173,7 @@ export interface ClientGameView {
     chat: boolean;
     draw: boolean;
   };
+  pendingQuestion: PendingQuestion | null;
   winner: Team | null;
   gameLog: GameEvent[];
 }

@@ -162,6 +162,20 @@ io.on('connection', (socket) => {
 
     broadcastState(currentGameId);
 
+    // If there's a pending question targeting an AI, trigger their answer
+    const pending = game.engine.getPendingQuestion();
+    if (pending) {
+      const targetPlayer = game.engine.getPlayerById(pending.targetId);
+      if (targetPlayer.type !== 'human') {
+        const gId = currentGameId;
+        setTimeout(() => processAIAnswer(gId, pending.targetId, pending.content, pending.askerId), 500);
+      } else {
+        // Human target needs to answer — restart timer for answer
+        startTurnTimer(currentGameId);
+      }
+      return;
+    }
+
     // Check if game over
     if (game.engine.isGameOver()) {
       clearTurnTimer(currentGameId);
@@ -250,6 +264,13 @@ async function processCodeAITurn(
     engine.processAction(chatAction);
     broadcastState(gameId);
     await sleep(delay);
+
+    // If AI asked a question, handle the answer
+    const pending = engine.getPendingQuestion();
+    if (pending) {
+      await processAIAnswer(gameId, pending.targetId, pending.content, pending.askerId);
+      await sleep(delay);
+    }
   }
 
   // Draw phase
@@ -310,6 +331,13 @@ async function processLLMAITurn(
     engine.processAction(chatAction);
     broadcastState(gameId);
     await sleep(delay);
+
+    // If AI asked a question, handle the answer
+    const pending = engine.getPendingQuestion();
+    if (pending) {
+      await processAIAnswer(gameId, pending.targetId, pending.content, pending.askerId);
+      await sleep(delay);
+    }
   }
 
   // Draw phase
@@ -349,6 +377,53 @@ async function processLLMAITurn(
   }
 }
 
+// ===== AI Answer Processing =====
+
+async function processAIAnswer(gameId: string, targetId: string, question: string, askerId: string): Promise<void> {
+  const game = games.get(gameId);
+  if (!game || game.engine.isGameOver()) return;
+
+  const targetPlayer = game.engine.getPlayerById(targetId);
+  const view = game.engine.getClientView(targetId);
+  const delay = game.engine.getState().mode === 'spectate' ? game.spectateSpeed : 500;
+
+  io.to(gameId).emit('game:ai_thinking', targetId);
+
+  let answerAction: GameAction;
+
+  if (targetPlayer.type === 'llm_ai') {
+    const llmPlayer = game.llmPlayers.get(targetId);
+    if (llmPlayer) {
+      answerAction = await llmPlayer.generateAnswer(view, targetPlayer, question, askerId);
+    } else {
+      answerAction = game.codeAI.generateAnswer(view, targetPlayer);
+    }
+  } else {
+    // code_ai: 30% refuse
+    answerAction = game.codeAI.generateRefusal(view, targetPlayer);
+  }
+
+  await sleep(delay);
+  game.engine.processAction(answerAction);
+
+  io.to(gameId).emit('game:ai_done', targetId);
+  broadcastState(gameId);
+
+  if (game.engine.isGameOver()) {
+    clearTurnTimer(gameId);
+    handleGameOver(gameId);
+    return;
+  }
+
+  // Continue with current player's turn (next phase after chat)
+  const nextType = game.engine.getCurrentPlayerType();
+  if (nextType.type !== 'human') {
+    setTimeout(() => processAITurn(gameId), delay);
+  } else {
+    startTurnTimer(gameId);
+  }
+}
+
 // ===== Turn Timer =====
 
 function startTurnTimer(gameId: string): void {
@@ -382,6 +457,21 @@ function forceAdvanceTurn(gameId: string): void {
 
   const playerId = game.engine.getCurrentPlayerId();
   const phase = game.engine.getPhase();
+
+  // If there's a pending question, auto-refuse on timeout
+  const pending = game.engine.getPendingQuestion();
+  if (pending) {
+    game.engine.processAction({ type: 'chat_refuse', playerId: pending.targetId });
+    broadcastState(gameId);
+    // Continue flow after answer
+    const nextType = game.engine.getCurrentPlayerType();
+    if (nextType.type !== 'human') {
+      setTimeout(() => processAITurn(gameId), 500);
+    } else {
+      startTurnTimer(gameId);
+    }
+    return;
+  }
 
   // Only advance ONE phase per timeout (timer resets after each action)
   if (phase === 'chat') {
