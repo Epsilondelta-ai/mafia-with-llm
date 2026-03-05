@@ -71,6 +71,7 @@ ${roleDesc[player.role]}
 - 마피아를 죽이면 체력 회복 + 카드 보상
 - 경찰에게 공격/방해 카드를 사용할 수 있는 것은 정체를 공개한 마피아만 가능
 - 경찰을 직접 공격하려면 정체를 공개해야 함
+- 💀탈락한 플레이어는 게임에서 완전히 제외됩니다. 대화, 질문, 카드 사용의 대상이 될 수 없습니다. 탈락자는 무시하세요.
 
 ⚠️ 정체 공개 시스템:
 - 마피아가 자발적으로 정체를 공개할 수 있음
@@ -113,17 +114,18 @@ ${recentChat || '(없음)'}
 `;
 
     if (phase === 'chat') {
-      prompt += `행동을 선택하세요. JSON으로 응답:
+      prompt += `행동을 선택하세요. JSON으로 응답 (⚠️ 살아있는 플레이어에게만 질문 가능):
 1. 공개 발언: {"action":"public","content":"발언 내용"}
-2. 질문: {"action":"question","targetId":"대상ID","content":"질문 내용"}
+2. 질문 (생존자만): {"action":"question","targetId":"대상ID","content":"질문 내용"}
 3. 건너뛰기: {"action":"skip"}`;
     } else if (phase === 'use_cards') {
       const usableCards = player.hand.length;
       prompt += `카드를 사용하세요. 여러 장 연속 사용 가능합니다 (현재 손패: ${usableCards}장).
 사용할 카드가 남아있으면 계속 사용하고, 더 이상 쓸 카드가 없을 때만 턴을 종료하세요.
 킬 보상으로 새로 뽑은 카드도 즉시 사용 가능합니다.
+⚠️ 탈락한 플레이어에게는 카드를 사용할 수 없습니다. 생존자만 대상으로 지정하세요.
 JSON으로 응답:
-1. 카드 사용: {"action":"use","cardId":"카드인스턴스ID","targetId":"대상ID"}`;
+1. 카드 사용 (생존자만): {"action":"use","cardId":"카드인스턴스ID","targetId":"대상ID"}`;
 
       // Only show reveal option if mafia and not yet revealed
       if (player.role === 'mafia' && !player.isIdentityRevealed) {
@@ -141,18 +143,30 @@ JSON으로 응답:
   }
 
   private formatPlayers(players: ClientPlayerView[], self: Player): string {
-    return players.map(p => {
+    const alive = players.filter(p => p.isAlive);
+    const dead = players.filter(p => !p.isAlive);
+
+    const formatOne = (p: ClientPlayerView) => {
       const isRevealedMafia = p.role === 'mafia' && p.isIdentityRevealed;
       const role = p.role === 'unknown' ? '???' : this.roleToKo(p.role as any);
-      const status = !p.isAlive ? '💀탈락' : `❤️${p.health}/${p.maxHealth}`;
+      const me = p.id === self.id ? ' (나)' : '';
+      if (!p.isAlive) {
+        return `- ${p.name}: ${role} 💀탈락`;
+      }
+      const status = `❤️${p.health}/${p.maxHealth}`;
       const arrested = p.isArrested ? ' [체포]' : '';
       const revealed = isRevealedMafia ? ' 🔴마피아[정체공개]=공격가능!' : (p.isIdentityRevealed ? ' [공개]' : '');
-      const me = p.id === self.id ? ' (나)' : '';
       const publicCards = p.publicCards.length > 0
         ? ` 공격카드: ${p.publicCards.map(c => CARD_DEFS[c.cardId].nameKo).join(',')}`
         : '';
       return `- ${p.name}${me}: ${role} ${status}${arrested}${revealed}${publicCards} [ID:${p.id.slice(0,8)}]`;
-    }).join('\n');
+    };
+
+    let result = `[생존자 ${alive.length}명]\n${alive.map(formatOne).join('\n')}`;
+    if (dead.length > 0) {
+      result += `\n\n[탈락자 ${dead.length}명 - 행동 대상 불가]\n${dead.map(formatOne).join('\n')}`;
+    }
+    return result;
   }
 
   private formatHand(hand: CardInstance[]): string {
