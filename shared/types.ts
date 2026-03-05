@@ -182,6 +182,8 @@ export interface ClientPlayerView {
   id: string;
   name: string;
   type: PlayerType;
+  llmProvider?: LLMProvider;
+  llmModel?: string;
   role: Role | 'unknown'; // hidden unless revealed or self
   health: number;
   maxHealth: number;

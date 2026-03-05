@@ -111,6 +111,8 @@ export class GameEngine {
         id: p.id,
         name: p.name,
         type: p.type,
+        llmProvider: p.llmProvider,
+        llmModel: p.llmModel,
         role: showRole ? p.role : 'unknown',
         health: p.health,
         maxHealth: p.maxHealth,

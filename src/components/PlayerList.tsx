@@ -16,6 +16,17 @@ const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   unknown: { label: '???', color: 'text-mafia-muted' },
 };
 
+function formatModelName(model?: string): string {
+  if (!model) return '';
+  // Shorten common model names for display
+  return model
+    .replace('claude-', '')
+    .replace('gpt-', 'GPT-')
+    .replace('gemini-', 'Gem-')
+    .replace('grok-', 'Grok-')
+    .replace(/-\d{8}$/, ''); // remove date suffix like -20250514
+}
+
 export default function PlayerList({ players, currentPlayerId, myPlayerId, showAllRoles, onSelectTarget, selectedTarget }: Props) {
   return (
     <div className="card-base">
@@ -57,6 +68,11 @@ export default function PlayerList({ players, currentPlayerId, myPlayerId, showA
                   <span className="text-xs text-mafia-muted">
                     {p.type === 'code_ai' ? '🤖' : p.type === 'llm_ai' ? '🧠' : '👤'}
                   </span>
+                  {p.type === 'llm_ai' && p.llmModel && (
+                    <span className="text-[10px] text-mafia-muted/70 truncate max-w-[80px]" title={p.llmModel}>
+                      {formatModelName(p.llmModel)}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="text-right shrink-0">
