@@ -35,9 +35,12 @@ const PROVIDER_MODELS: Record<LLMProvider, { value: string; label: string }[]> =
     { value: 'claude-opus-4-20250514', label: 'Opus 4' },
   ],
   gemini: [
-    { value: 'gemini-2.0-flash', label: '2.0 Flash' },
+    { value: 'gemini-3-flash-preview', label: '3.0 Flash' },
+    { value: 'gemini-3.1-flash-lite-preview', label: '3.1 Flash Lite' },
+    { value: 'gemini-3.1-pro-preview', label: '3.1 Pro' },
     { value: 'gemini-2.5-flash', label: '2.5 Flash' },
     { value: 'gemini-2.5-pro', label: '2.5 Pro' },
+    { value: 'gemini-2.0-flash', label: '2.0 Flash' },
   ],
   xai: [
     { value: 'grok-4-1-fast-reasoning', label: 'Grok 4.1 Fast Reasoning' },

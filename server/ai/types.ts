@@ -15,6 +15,6 @@ export const DEFAULT_MODELS: Record<LLMProvider, string> = {
   ollama: 'llama3.1',
   openai: 'gpt-4o-mini',
   claude: 'claude-sonnet-4-20250514',
-  gemini: 'gemini-2.0-flash',
+  gemini: 'gemini-3-flash-preview',
   xai: 'grok-4-1-fast-reasoning',
 };
