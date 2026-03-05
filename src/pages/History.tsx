@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import type { GameRecord } from '@shared/types';
+import { Link, useNavigate } from 'react-router-dom';
+import type { GameRecord, GameEvent, ChatMessage } from '@shared/types';
+
+type GameRecordSummary = Omit<GameRecord, 'events' | 'chatLog'>;
 
 export default function History() {
-  const [records, setRecords] = useState<GameRecord[]>([]);
+  const navigate = useNavigate();
+  const [records, setRecords] = useState<GameRecordSummary[]>([]);
   const [stats, setStats] = useState<{ total: number; citizenWins: number; mafiaWins: number } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -64,7 +67,11 @@ export default function History() {
       ) : (
         <div className="space-y-2">
           {records.map(record => (
-            <div key={record.id} className="card-base">
+            <div
+              key={record.id}
+              className="card-base cursor-pointer hover:ring-1 hover:ring-mafia-accent/50 transition-all"
+              onClick={() => navigate(`/history/${record.id}`)}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <div className={`text-sm font-bold ${
@@ -91,7 +98,7 @@ export default function History() {
                     ))}
                   </div>
                   <button
-                    onClick={() => handleDelete(record.id)}
+                    onClick={(e) => { e.stopPropagation(); handleDelete(record.id); }}
                     className="text-mafia-muted hover:text-red-400 text-xs p-1"
                     title="삭제"
                   >

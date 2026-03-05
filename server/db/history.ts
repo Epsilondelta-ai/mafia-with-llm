@@ -32,13 +32,13 @@ export function saveGameRecord(
   );
 }
 
-export function getGameRecords(limit = 50, offset = 0): GameRecord[] {
+export function getGameRecords(limit = 50, offset = 0): Omit<GameRecord, 'events' | 'chatLog'>[] {
   const db = getDb();
   const rows = db.prepare(
-    'SELECT * FROM game_records ORDER BY started_at DESC LIMIT ? OFFSET ?'
+    'SELECT id, started_at, ended_at, player_count, winner, winner_text, mode, total_turns, players_json FROM game_records ORDER BY started_at DESC LIMIT ? OFFSET ?'
   ).all(limit, offset) as any[];
 
-  return rows.map(mapRow);
+  return rows.map(mapRowSummary);
 }
 
 export function getGameRecord(id: string): GameRecord | null {
@@ -75,5 +75,19 @@ function mapRow(row: any): GameRecord {
     players: JSON.parse(row.players_json),
     events: JSON.parse(row.events_json || '[]'),
     chatLog: JSON.parse(row.chat_log_json || '[]'),
+  };
+}
+
+function mapRowSummary(row: any): Omit<GameRecord, 'events' | 'chatLog'> {
+  return {
+    id: row.id,
+    startedAt: row.started_at,
+    endedAt: row.ended_at,
+    playerCount: row.player_count,
+    winner: row.winner as Team,
+    winnerText: row.winner_text,
+    mode: row.mode as GameMode,
+    totalTurns: row.total_turns,
+    players: JSON.parse(row.players_json),
   };
 }

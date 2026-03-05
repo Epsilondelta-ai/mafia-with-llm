@@ -3,6 +3,7 @@ import Lobby from './pages/Lobby';
 import Game from './pages/Game';
 import Spectator from './pages/Spectator';
 import History from './pages/History';
+import GameDetail from './pages/GameDetail';
 import Navigation from './components/Navigation';
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/game/:gameId" element={<Game />} />
           <Route path="/spectate/:gameId" element={<Spectator />} />
           <Route path="/history" element={<History />} />
+          <Route path="/history/:id" element={<GameDetail />} />
         </Routes>
       </main>
     </div>
