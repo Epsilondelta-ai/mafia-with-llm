@@ -192,8 +192,8 @@ export class CodeAI {
     if (disruptCards.length > 0) {
       const targets = view.players.filter(p => {
         if (p.id === player.id || !p.isAlive) return false;
-        // Only mafia can use interference cards against police
-        if (p.role === 'police' && player.role !== 'mafia') return false;
+        // Only revealed mafia can use interference cards against police
+        if (p.role === 'police' && !(player.role === 'mafia' && player.isIdentityRevealed)) return false;
         return true;
       });
       if (targets.length > 0) {
