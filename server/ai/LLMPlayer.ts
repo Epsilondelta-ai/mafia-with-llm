@@ -223,30 +223,39 @@ JSON으로 응답:
   }
 
   private findFallbackCardAction(view: ClientGameView, player: Player): GameAction | null {
-    // Try to find an attack card and valid target (used when LLM tries reveal after already revealed)
-    const attackCards = player.hand.filter(c => CARD_DEFS[c.cardId].type === 'attack');
-    if (attackCards.length > 0 && !player.isArrested) {
-      const enemies = view.players.filter(p => {
-        if (p.id === player.id || !p.isAlive) return false;
-        // Revealed mafia can attack police
-        if (p.role === 'police' && player.role === 'mafia' && player.isIdentityRevealed) return true;
-        // Don't attack fellow mafia
-        if (player.role === 'mafia' && p.role === 'mafia') return false;
-        return true;
-      });
-      if (enemies.length > 0) {
-        // Prefer police target if revealed mafia
-        const police = enemies.find(p => p.role === 'police');
-        const target = police || enemies.sort((a, b) => a.health - b.health)[0];
-        return {
-          type: 'use_card',
-          playerId: player.id,
-          cardInstanceId: attackCards[0].instanceId,
-          targetPlayerId: target.id,
-        };
+    // Fallback when LLM tries reveal after already revealed - find an attack card to use
+    if (player.isArrested || player.hospitalUsedThisTurn) return null;
+
+    const attackCards = player.hand.filter(c => {
+      if (CARD_DEFS[c.cardId].type !== 'attack') return false;
+      // Respect snipe/shot mutual exclusion
+      if (c.cardId === 'snipe' && player.usedAttackThisTurn) return false;
+      if (c.cardId === 'shot' && player.usedSnipeThisTurn) return false;
+      return true;
+    });
+    if (attackCards.length === 0) return null;
+
+    const enemies = view.players.filter(p => {
+      if (p.id === player.id || !p.isAlive) return false;
+      // Police targeting: only revealed mafia can attack police
+      if (p.role === 'police') {
+        return player.role === 'mafia' && player.isIdentityRevealed;
       }
-    }
-    return null;
+      // Don't attack fellow mafia
+      if (player.role === 'mafia' && p.role === 'mafia') return false;
+      return true;
+    });
+    if (enemies.length === 0) return null;
+
+    // Prefer police target if revealed mafia
+    const police = enemies.find(p => p.role === 'police');
+    const target = police || enemies.sort((a, b) => a.health - b.health)[0];
+    return {
+      type: 'use_card',
+      playerId: player.id,
+      cardInstanceId: attackCards[0].instanceId,
+      targetPlayerId: target.id,
+    };
   }
 
   private fallbackAction(view: ClientGameView, player: Player): GameAction {
