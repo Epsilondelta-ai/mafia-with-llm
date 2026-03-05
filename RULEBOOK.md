@@ -1,103 +1,103 @@
-# 마피아 카드게임 룰북
+# Mafia Card Game Rulebook
 
-## 1. 게임 개요
-턴제 숨겨진 역할 카드게임. 시민 진영과 마피아 진영이 대립합니다.
+## 1. Overview
+A turn-based hidden role card game. The Citizen faction and the Mafia faction oppose each other.
 
-## 2. 역할 및 진영
+## 2. Roles & Factions
 
-### 경찰 (시민 진영)
-- 역할이 항상 공개됨
-- 체력 4 (다른 역할보다 1 높음)
-- 정체가 공개된 마피아만 공격 가능
-- 방해 카드(체포/압수/수색)도 정체 공개된 마피아에게만 사용 가능
+### Police (Citizen Faction)
+- Role is always public
+- Health 4 (1 higher than other roles)
+- Can only attack revealed Mafia
+- Disruption cards (Arrest/Seize/Search) can only be used on revealed Mafia
 
-### 시민 (시민 진영)
-- 역할 비공개
-- 체력 3
-- 누구든 공격 가능 (경찰 제외)
+### Citizen (Citizen Faction)
+- Role is hidden
+- Health 3
+- Can attack anyone (except Police)
 
-### 마피아 (마피아 진영)
-- 역할 비공개 (자발적 공개 가능)
-- 체력 3
-- 마피아끼리 서로 누구인지 앎
-- 경찰을 직접 공격하려면 정체를 공개해야 함
+### Mafia (Mafia Faction)
+- Role is hidden (can voluntarily reveal)
+- Health 3
+- Mafia members know each other's identity
+- Must reveal identity to directly attack Police
 
-## 3. 승리 조건
-- **시민 진영 승리:** 마피아 전원 제거
-- **마피아 진영 승리:** 경찰 제거 또는 시민 전원 사망
+## 3. Victory Conditions
+- **Citizen Faction wins:** All Mafia eliminated
+- **Mafia Faction wins:** Police eliminated OR all Citizens dead
 
-## 4. 턴 구조
-경찰이 첫 순서. 이후 순차 진행. 각 턴은 3단계:
+## 4. Turn Structure
+Police goes first. Then sequential order. Each turn has 3 phases:
 
-### 4-1. 채팅 단계
-다음 중 하나 선택:
-- **공개 발언:** 전체에게 한마디 (대답 없음)
-- **1:1 질문:** 한 명 지목하여 질문 (질문과 대답 모두 전체 공개, 한 문장 제한, 거부 가능)
-- **건너뛰기:** 발언 안 함
+### 4-1. Chat Phase
+Choose one:
+- **Public statement:** Say one thing to everyone (no reply)
+- **1:1 Question:** Ask one player a question (both Q&A are public, one sentence limit, can refuse)
+- **Skip:** Say nothing
 
-### 4-2. 카드 뽑기 단계
-- 2장 드로 (저격 패널티 시 건너뜀)
-- 공격 카드를 뽑으면 즉시 전체 공개
+### 4-2. Draw Phase
+- Draw 2 cards (skipped if Snipe penalty active)
+- Attack cards are immediately revealed to all when drawn
 
-### 4-3. 카드 사용 단계
-- 사용 횟수 제한 없음 (여러 장 연속 사용 가능)
-- 마피아는 이 단계에서 정체 공개 가능
-- 더 이상 쓸 카드가 없으면 턴 종료
+### 4-3. Card Use Phase
+- No limit on card uses (can use multiple cards in sequence)
+- Mafia can reveal identity during this phase
+- End turn when no more cards to play
 
-## 5. 카드 종류
+## 5. Card Types
 
-### 공격 카드 (보유 현황 공개)
-- **총격 (SHOT):** 대상 1명에게 1데미지
-- **저격 (SNIPE):** 대상 1명에게 2데미지. 총격과 같은 턴에 혼용 불가. 사용 후 추가 공격 불가. 다음 턴 드로 불가.
+### Attack Cards (holdings are public)
+- **Shot (SHOT):** Deal 1 damage to a target
+- **Snipe (SNIPE):** Deal 2 damage to a target. Cannot mix with Shot in the same turn. No further attacks after use. Skip draw next turn.
 
-### 회복 카드 (비공개)
-- **응급처치 (FIRST AID):** 체력 1 회복
-- **입원 (HOSPITAL):** 체력 2 회복. 해당 턴 공격 불가 (공격 후 사용도 불가).
+### Recovery Cards (hidden)
+- **First Aid (FIRST AID):** Restore 1 health
+- **Hospital (HOSPITAL):** Restore 2 health. Cannot attack this turn (cannot use after attacking either).
 
-### 방해 카드 (비공개)
-- **체포 (ARREST):** 대상의 다음 턴 공격 불가
-- **압수 (SEIZE):** 대상의 공개된 공격 카드 1장 지정 파괴
-- **수색 (SEARCH):** 대상의 비공개 카드 1장 랜덤 파괴
+### Disruption Cards (hidden)
+- **Arrest (ARREST):** Target cannot attack next turn
+- **Seize (SEIZE):** Destroy 1 specified public attack card from target
+- **Search (SEARCH):** Destroy 1 random hidden card from target
 
-### 특수 카드 (비공개, 자동 발동)
-- **구급차 (AMBULANCE):** 사망 시 자동 발동. 체력 1로 부활. 구급차만 소멸(영구 제거), 나머지 손패 유지.
+### Special Cards (hidden, auto-trigger)
+- **Ambulance (AMBULANCE):** Auto-triggers on death. Revive with 1 health. Only the Ambulance is consumed (permanently removed); rest of hand is kept.
 
-### 중요 참고
-- 공격 카드는 덱에서 랜덤 드로이므로 보유량과 역할(마피아 여부)은 무관합니다.
-- 총을 많이 가진 것은 마피아라는 증거가 아닙니다.
+### Important Note
+- Attack cards are randomly drawn from the deck, so holdings have no correlation with role (Mafia or not).
+- Having many guns is NOT evidence of being Mafia.
 
-## 6. 벌칙 및 보상
+## 6. Penalties & Rewards
 
-### 시민 킬 벌칙
-- 경찰, 시민, 정체 미공개 마피아가 시민을 죽이면 → 체포 상태 (다음 턴 공격 불가)
-- 정체 공개 마피아가 시민을 죽이면 → 벌칙 없음
+### Citizen Kill Penalty
+- If Police, Citizen, or unrevealed Mafia kills a Citizen → Arrested (cannot attack next turn)
+- If revealed Mafia kills a Citizen → No penalty
 
-### 마피아 킬 보상
-- 누구든 마피아를 제거하면 → 체력 +1 회복, 카드 2장 추가 드로
+### Mafia Kill Reward
+- Anyone who eliminates a Mafia → +1 health, draw 2 extra cards
 
-### 정체 공개 마피아 킬 보상
-- 정체 공개 마피아가 누구든 제거하면 → 체력 +1 회복, 카드 2장 추가 드로
+### Revealed Mafia Kill Reward
+- If a revealed Mafia eliminates anyone → +1 health, draw 2 extra cards
 
-### 마피아 정체 공개 시스템
-- 자기 턴 카드 사용 단계에서 자발적으로 공개 가능 (되돌리기 불가)
-- 공개 즉시 카드 2장 추가 드로
-- 공개 후: 경찰을 직접 공격 가능, 경찰에게 방해 카드 사용 가능
-- 공개 후: 누구든 제거 시 체력+1, 카드+2 보상
-- 공개된 마피아는 모든 플레이어가 공격 가능
+### Mafia Identity Reveal System
+- Can voluntarily reveal during Card Use phase on your turn (irreversible)
+- Immediately draw 2 extra cards upon reveal
+- After reveal: Can directly attack Police, can use disruption cards on Police
+- After reveal: +1 health and +2 cards for every kill
+- Revealed Mafia can be attacked by all players
 
-## 7. 경찰 관련 특수 규칙
-- 경찰에게 공격 카드를 사용하려면 → 정체를 공개한 마피아만 가능
-- 경찰에게 방해 카드(체포/압수/수색)를 사용하려면 → 정체를 공개한 마피아만 가능
-- 경찰이 공격하려면 → 정체가 공개된 마피아만 대상 가능
+## 7. Police Special Rules
+- To use attack cards on Police → Only revealed Mafia can
+- To use disruption cards (Arrest/Seize/Search) on Police → Only revealed Mafia can
+- For Police to attack → Can only target revealed Mafia
 
-## 8. 탈락
-- 체력이 0 이하가 되면 탈락
-- 탈락 시 역할이 전체 공개됨
-- 구급차 보유 시 자동 부활 (체력 1)
-- 탈락한 플레이어는 게임에서 완전히 제외. 대화, 질문, 카드 사용의 대상이 될 수 없음.
+## 8. Elimination
+- Eliminated when health drops to 0 or below
+- Role is revealed to all upon elimination
+- Auto-revive if holding Ambulance (1 health)
+- Eliminated players are completely removed from the game. They cannot be targeted for chat, questions, or card use.
 
-## 9. 전략 가이드
-- 채팅을 활용하여 정보를 수집하고, 의심스러운 플레이어를 추궁하세요.
-- 마피아는 시민인 척 행동하며 의심을 다른 곳으로 돌리세요.
-- 정체가 공개된 마피아가 있다면 시민 진영은 협력하여 우선 제거하세요.
-- 카드 사용은 전략적으로: 회복이 필요하면 먼저 회복, 공격 기회가 있으면 적극 활용하세요.
+## 9. Strategy Guide
+- Use chat to gather information and interrogate suspicious players.
+- Mafia should act like Citizens and deflect suspicion elsewhere.
+- If a Mafia is revealed, the Citizen faction should cooperate to eliminate them first.
+- Use cards strategically: heal first if needed, attack aggressively when the opportunity arises.
