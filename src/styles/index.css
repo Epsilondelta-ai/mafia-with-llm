@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply min-h-screen overflow-x-hidden;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-mafia-bg;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-mafia-card rounded-full;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-mafia-accent text-white rounded-lg font-semibold
+           hover:bg-red-500 active:scale-95 transition-all duration-150
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-mafia-card text-mafia-text rounded-lg font-semibold
+           hover:bg-mafia-surface active:scale-95 transition-all duration-150
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .card-base {
+    @apply bg-mafia-surface border border-mafia-card rounded-xl p-4
+           shadow-lg shadow-black/20;
+  }
+
+  .game-card {
+    @apply bg-mafia-card rounded-lg p-3 border border-white/10
+           hover:border-mafia-accent/50 transition-colors cursor-pointer
+           active:scale-95 transform duration-150;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 bg-mafia-card border border-mafia-card rounded-lg
+           text-mafia-text placeholder:text-mafia-muted
+           focus:outline-none focus:border-mafia-accent transition-colors;
+  }
+}
