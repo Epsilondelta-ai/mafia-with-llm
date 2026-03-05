@@ -123,9 +123,18 @@ ${recentChat || '(없음)'}
 사용할 카드가 남아있으면 계속 사용하고, 더 이상 쓸 카드가 없을 때만 턴을 종료하세요.
 킬 보상으로 새로 뽑은 카드도 즉시 사용 가능합니다.
 JSON으로 응답:
-1. 카드 사용: {"action":"use","cardId":"카드인스턴스ID","targetId":"대상ID"}
-2. 정체 공개 (마피아만): {"action":"reveal"}
+1. 카드 사용: {"action":"use","cardId":"카드인스턴스ID","targetId":"대상ID"}`;
+
+      // Only show reveal option if mafia and not yet revealed
+      if (player.role === 'mafia' && !player.isIdentityRevealed) {
+        prompt += `\n2. 정체 공개 (마피아만): {"action":"reveal"}
 3. 턴 종료 (쓸 카드 없을 때만): {"action":"end"}`;
+      } else if (player.role === 'mafia' && player.isIdentityRevealed) {
+        prompt += `\n2. 턴 종료 (쓸 카드 없을 때만): {"action":"end"}
+⚠️ 정체 공개 완료! 경찰을 직접 공격할 수 있습니다. 보너스 카드를 포함해 손패의 공격 카드를 적극 활용하세요!`;
+      } else {
+        prompt += `\n2. 턴 종료 (쓸 카드 없을 때만): {"action":"end"}`;
+      }
     }
 
     return prompt;
@@ -186,6 +195,14 @@ JSON으로 응답:
             return { type: 'use_card', playerId: player.id, cardInstanceId, targetPlayerId: target };
           }
         }
+        // If LLM tried to reveal but already revealed, try to find a card to use instead of ending turn
+        if (parsed.action === 'reveal' && player.isIdentityRevealed) {
+          const fallback = this.findFallbackCardAction(view, player);
+          if (fallback) return fallback;
+        }
+        if (parsed.action === 'end') {
+          return { type: 'end_turn', playerId: player.id };
+        }
         return { type: 'end_turn', playerId: player.id };
       }
     } catch {
@@ -203,6 +220,33 @@ JSON으로 응답:
   private resolveCardId(partialId: string, hand: CardInstance[]): string | undefined {
     const card = hand.find(c => c.instanceId.startsWith(partialId));
     return card?.instanceId;
+  }
+
+  private findFallbackCardAction(view: ClientGameView, player: Player): GameAction | null {
+    // Try to find an attack card and valid target (used when LLM tries reveal after already revealed)
+    const attackCards = player.hand.filter(c => CARD_DEFS[c.cardId].type === 'attack');
+    if (attackCards.length > 0 && !player.isArrested) {
+      const enemies = view.players.filter(p => {
+        if (p.id === player.id || !p.isAlive) return false;
+        // Revealed mafia can attack police
+        if (p.role === 'police' && player.role === 'mafia' && player.isIdentityRevealed) return true;
+        // Don't attack fellow mafia
+        if (player.role === 'mafia' && p.role === 'mafia') return false;
+        return true;
+      });
+      if (enemies.length > 0) {
+        // Prefer police target if revealed mafia
+        const police = enemies.find(p => p.role === 'police');
+        const target = police || enemies.sort((a, b) => a.health - b.health)[0];
+        return {
+          type: 'use_card',
+          playerId: player.id,
+          cardInstanceId: attackCards[0].instanceId,
+          targetPlayerId: target.id,
+        };
+      }
+    }
+    return null;
   }
 
   private fallbackAction(view: ClientGameView, player: Player): GameAction {
