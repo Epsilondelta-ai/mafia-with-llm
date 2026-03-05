@@ -21,6 +21,7 @@ const PROVIDER_MODELS: Record<LLMProvider, { value: string; label: string }[]> =
     { value: 'gemma2', label: 'Gemma 2' },
     { value: 'phi3', label: 'Phi 3' },
     { value: 'codellama', label: 'Code Llama' },
+    { value: 'qwen3.5:122b', label: 'Qwen 3.5 122B' },
   ],
   openai: [
     { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
@@ -39,8 +40,8 @@ const PROVIDER_MODELS: Record<LLMProvider, { value: string; label: string }[]> =
     { value: 'gemini-2.5-pro', label: '2.5 Pro' },
   ],
   xai: [
-    { value: 'grok-3-mini', label: 'Grok 3 Mini' },
-    { value: 'grok-3', label: 'Grok 3' },
+    { value: 'grok-4-1-fast-reasoning', label: 'Grok 4.1 Fast Reasoning' },
+    { value: 'grok-4-1-fast-non-reasoning', label: 'Grok 4.1 Fast' },
   ],
 };
 
