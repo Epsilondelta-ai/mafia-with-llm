@@ -118,10 +118,14 @@ ${recentChat || '(없음)'}
 2. 질문: {"action":"question","targetId":"대상ID","content":"질문 내용"}
 3. 건너뛰기: {"action":"skip"}`;
     } else if (phase === 'use_cards') {
-      prompt += `카드를 사용하거나 턴을 종료하세요. JSON으로 응답:
+      const usableCards = player.hand.length;
+      prompt += `카드를 사용하세요. 여러 장 연속 사용 가능합니다 (현재 손패: ${usableCards}장).
+사용할 카드가 남아있으면 계속 사용하고, 더 이상 쓸 카드가 없을 때만 턴을 종료하세요.
+킬 보상으로 새로 뽑은 카드도 즉시 사용 가능합니다.
+JSON으로 응답:
 1. 카드 사용: {"action":"use","cardId":"카드인스턴스ID","targetId":"대상ID"}
 2. 정체 공개 (마피아만): {"action":"reveal"}
-3. 턴 종료: {"action":"end"}`;
+3. 턴 종료 (쓸 카드 없을 때만): {"action":"end"}`;
     }
 
     return prompt;

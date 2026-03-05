@@ -259,9 +259,9 @@ async function processCodeAITurn(
     await sleep(delay);
   }
 
-  // Use cards phase - multiple actions possible
+  // Use cards phase - multiple actions possible (no limit per design rules)
   if (engine.getPhase() === 'use_cards') {
-    let maxActions = 5;
+    let maxActions = 15; // Safety cap; design says "제한 없음"
     while (engine.getPhase() === 'use_cards' && maxActions > 0) {
       const updatedView = engine.getClientView(player.id);
       const updatedPlayer = engine.getState().players.find(p => p.id === player.id)!;
@@ -319,9 +319,9 @@ async function processLLMAITurn(
     await sleep(delay);
   }
 
-  // Use cards phase
+  // Use cards phase - multiple actions possible (no limit per design rules)
   if (engine.getPhase() === 'use_cards') {
-    let maxActions = 5;
+    let maxActions = 15; // Safety cap; design says "제한 없음"
     while (engine.getPhase() === 'use_cards' && maxActions > 0) {
       const updatedView = engine.getClientView(player.id);
       const updatedPlayer = engine.getState().players.find(p => p.id === player.id)!;
