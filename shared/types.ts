@@ -203,6 +203,8 @@ export interface GameRecord {
   mode: GameMode;
   totalTurns: number;
   players: GameRecordPlayer[];
+  events: GameEvent[];
+  chatLog: ChatMessage[];
 }
 
 export interface GameRecordPlayer {

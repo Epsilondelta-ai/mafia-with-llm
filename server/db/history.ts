@@ -1,5 +1,5 @@
 import { getDb } from './index.js';
-import type { GameRecord, GameRecordPlayer, Team, GameMode, GameEvent } from '../../shared/types.js';
+import type { GameRecord, GameRecordPlayer, Team, GameMode, GameEvent, ChatMessage } from '../../shared/types.js';
 
 export function saveGameRecord(
   id: string,
@@ -8,14 +8,15 @@ export function saveGameRecord(
   totalTurns: number,
   players: GameRecordPlayer[],
   events: GameEvent[],
+  chatLog: ChatMessage[],
   startedAt: string,
 ): void {
   const db = getDb();
   const winnerText = winner === 'citizen_team' ? '시민 진영 승리' : '마피아 진영 승리';
 
   db.prepare(`
-    INSERT INTO game_records (id, started_at, ended_at, player_count, winner, winner_text, mode, total_turns, players_json, events_json)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO game_records (id, started_at, ended_at, player_count, winner, winner_text, mode, total_turns, players_json, events_json, chat_log_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id,
     startedAt,
@@ -27,6 +28,7 @@ export function saveGameRecord(
     totalTurns,
     JSON.stringify(players),
     JSON.stringify(events),
+    JSON.stringify(chatLog),
   );
 }
 
@@ -71,5 +73,7 @@ function mapRow(row: any): GameRecord {
     mode: row.mode as GameMode,
     totalTurns: row.total_turns,
     players: JSON.parse(row.players_json),
+    events: JSON.parse(row.events_json || '[]'),
+    chatLog: JSON.parse(row.chat_log_json || '[]'),
   };
 }

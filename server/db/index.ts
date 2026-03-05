@@ -28,11 +28,19 @@ function initSchema(): void {
       mode TEXT NOT NULL DEFAULT 'play',
       total_turns INTEGER NOT NULL,
       players_json TEXT NOT NULL,
-      events_json TEXT NOT NULL
+      events_json TEXT NOT NULL,
+      chat_log_json TEXT NOT NULL DEFAULT '[]'
     );
 
     CREATE INDEX IF NOT EXISTS idx_game_records_started ON game_records(started_at DESC);
   `);
+
+  // Migration: add chat_log_json column for existing databases
+  try {
+    db.exec(`ALTER TABLE game_records ADD COLUMN chat_log_json TEXT NOT NULL DEFAULT '[]'`);
+  } catch {
+    // Column already exists, ignore
+  }
 }
 
 export function closeDb(): void {

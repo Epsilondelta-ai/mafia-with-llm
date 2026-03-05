@@ -538,6 +538,7 @@ function handleGameOver(gameId: string): void {
     state.turnNumber,
     players,
     state.gameLog,
+    state.chatLog,
     game.startedAt,
   );
 
