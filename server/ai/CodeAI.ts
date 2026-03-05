@@ -192,6 +192,11 @@ export class CodeAI {
         return p.role === 'mafia' && p.isIdentityRevealed;
       }
 
+      // Only revealed mafia can attack police
+      if (p.role === 'police' && !(player.role === 'mafia' && player.isIdentityRevealed)) {
+        return false;
+      }
+
       // Mafia targets non-mafia preferentially
       if (player.role === 'mafia') {
         return p.role !== 'mafia';

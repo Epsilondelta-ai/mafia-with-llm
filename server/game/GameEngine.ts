@@ -96,7 +96,8 @@ export class GameEngine {
     const players: ClientPlayerView[] = this.state.players.map(p => {
       const isMe = p.id === playerId;
       const isMafiaAlly = myPlayer?.role === 'mafia' && p.role === 'mafia';
-      const showRole = isMe || p.isIdentityRevealed || !p.isAlive || isMafiaAlly || p.role === 'police';
+      const isGameOver = this.state.phase === 'game_over';
+      const showRole = isGameOver || isMe || p.isIdentityRevealed || !p.isAlive || isMafiaAlly || p.role === 'police';
 
       return {
         id: p.id,
@@ -339,6 +340,11 @@ export class GameEngine {
     player.usedAttackThisTurn = false;
     player.hospitalUsedThisTurn = false;
 
+    // Clear arrest status at end of turn (arrested player couldn't attack this turn)
+    if (player.isArrested) {
+      player.isArrested = false;
+    }
+
     this.emit('turn_end', playerId, undefined, {
       message: `${player.name}'s turn ends`,
       messageKo: `${player.name}의 턴이 종료되었습니다`,
@@ -393,6 +399,11 @@ export class GameEngine {
       return { success: false, error: 'Police can only attack revealed mafia' };
     }
 
+    // Only revealed mafia can attack police
+    if (target.role === 'police' && !(player.role === 'mafia' && player.isIdentityRevealed)) {
+      return { success: false, error: 'Only revealed mafia can attack police' };
+    }
+
     player.usedAttackThisTurn = true;
     this.dealDamage(player, target, 1);
 
@@ -413,6 +424,11 @@ export class GameEngine {
 
     if (player.role === 'police' && !(target.role === 'mafia' && target.isIdentityRevealed)) {
       return { success: false, error: 'Police can only attack revealed mafia' };
+    }
+
+    // Only revealed mafia can attack police
+    if (target.role === 'police' && !(player.role === 'mafia' && player.isIdentityRevealed)) {
+      return { success: false, error: 'Only revealed mafia can attack police' };
     }
 
     player.usedSnipeThisTurn = true;
@@ -641,15 +657,9 @@ export class GameEngine {
     this.state.phase = 'chat';
     this.state.turnPhaseComplete = { chat: false, draw: false };
 
-    // Clear arrest status at start of turn (they were arrested for one full round)
-    const nextPlayer = this.currentPlayer();
-    if (nextPlayer.isArrested) {
-      nextPlayer.isArrested = false;
-    }
-
-    this.emit('turn_start', nextPlayer.id, undefined, {
-      message: `Turn ${this.state.turnNumber}: ${nextPlayer.name}'s turn`,
-      messageKo: `턴 ${this.state.turnNumber}: ${nextPlayer.name}의 차례`,
+    this.emit('turn_start', this.currentPlayer().id, undefined, {
+      message: `Turn ${this.state.turnNumber}: ${this.currentPlayer().name}'s turn`,
+      messageKo: `턴 ${this.state.turnNumber}: ${this.currentPlayer().name}의 차례`,
     });
   }
 

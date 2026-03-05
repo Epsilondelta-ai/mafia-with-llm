@@ -48,7 +48,9 @@ export default function PlayerList({ players, currentPlayerId, myPlayerId, showA
                     {p.name}
                   </span>
                   {isMe && <span className="text-[10px] text-mafia-gold">(나)</span>}
-                  {p.isIdentityRevealed && <span className="text-[10px]">👁</span>}
+                  {p.isIdentityRevealed && p.role === 'mafia' && p.isAlive && (
+                    <span className="text-[10px] text-mafia-accent font-medium">정체공개</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className={`text-xs ${role.color}`}>{role.label}</span>
