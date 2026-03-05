@@ -77,6 +77,25 @@ export class CodeAI {
     const role = player.role;
     const templates = this.templates[role];
 
+    // Check for revealed mafia - mention them in chat (non-mafia only)
+    const revealedMafia = view.players.filter(p => p.role === 'mafia' && p.isIdentityRevealed && p.isAlive);
+    if (revealedMafia.length > 0 && player.role !== 'mafia') {
+      const target = this.pickRandom(revealedMafia);
+      const revealedChatLines = [
+        `${target.name}은(는) 마피아입니다! 모두 힘을 합쳐 공격합시다!`,
+        `정체가 드러난 ${target.name}을(를) 우선 처리해야 합니다.`,
+        `${target.name}이(가) 마피아로 밝혀졌습니다. 집중 공격 요청합니다.`,
+        `마피아 ${target.name}을(를) 먼저 제거합시다!`,
+      ];
+      if (Math.random() < 0.7) {
+        return {
+          type: 'chat_public',
+          playerId: player.id,
+          content: this.pickRandom(revealedChatLines),
+        };
+      }
+    }
+
     // 20% skip, 50% public, 30% question
     const roll = Math.random();
 
@@ -224,13 +243,20 @@ export class CodeAI {
         return p.role !== 'mafia';
       }
 
-      // Citizens target revealed mafia or suspicious players
-      if (p.isIdentityRevealed && p.role === 'mafia') return true;
-
       return true;
     });
 
     if (enemies.length === 0) return null;
+
+    // Strongly prioritize revealed mafia (90% chance to target them)
+    const revealedMafia = enemies.filter(p => p.role === 'mafia' && p.isIdentityRevealed);
+    if (revealedMafia.length > 0 && player.role !== 'mafia') {
+      if (Math.random() < 0.9) {
+        // Pick lowest health revealed mafia
+        revealedMafia.sort((a, b) => a.health - b.health);
+        return revealedMafia[0];
+      }
+    }
 
     // Prefer low-health targets
     enemies.sort((a, b) => a.health - b.health);

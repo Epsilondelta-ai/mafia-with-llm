@@ -55,8 +55,8 @@ export class LLMPlayer {
 
   private buildSystemPrompt(player: Player): string {
     const roleDesc = {
-      police: '당신은 경찰입니다. 정체가 공개되어 있습니다. 마피아를 찾아 제거해야 합니다. 정체가 공개된 마피아만 공격할 수 있습니다.',
-      citizen: '당신은 시민입니다. 역할이 비공개입니다. 마피아를 찾아 제거하고 경찰을 보호해야 합니다.',
+      police: '당신은 경찰입니다. 정체가 공개되어 있습니다. 마피아를 찾아 제거해야 합니다. 정체가 공개된 마피아만 공격할 수 있습니다. 정체를 공개한 마피아가 있다면 반드시 최우선으로 공격하세요!',
+      citizen: '당신은 시민입니다. 역할이 비공개입니다. 마피아를 찾아 제거하고 경찰을 보호해야 합니다. 정체를 공개한 마피아가 있다면 적극적으로 공격하세요! 마피아를 죽이면 체력+1 카드+2 보상을 받습니다.',
       mafia: '당신은 마피아입니다. 역할이 비공개입니다. 경찰을 제거하면 승리합니다. 다른 마피아가 누구인지 알고 있습니다. 시민인 척 행동하세요. 정체를 공개하면 카드 2장 보너스를 받고, 경찰을 직접 공격할 수 있으며, 누구든 죽이면 체력+1 카드+2 보상을 받습니다. 공격카드가 2장 이상이거나 경찰 체력이 낮으면 정체 공개를 적극 고려하세요!',
     };
 
@@ -72,6 +72,13 @@ ${roleDesc[player.role]}
 - 경찰에게 공격/방해 카드를 사용할 수 있는 것은 마피아만 가능
 - 경찰을 직접 공격하려면 정체를 공개해야 함
 
+⚠️ 정체 공개 시스템:
+- 마피아가 자발적으로 정체를 공개할 수 있음
+- 플레이어 목록에서 "🔴마피아[정체공개]"로 표시된 플레이어는 마피아임이 확인된 상태
+- 정체가 공개된 마피아는 모든 플레이어가 공격 가능
+- 정체가 공개된 마피아를 죽이면 체력+1 카드+2 보상
+- 채팅에서 정체가 공개된 마피아에 대해 적극적으로 언급하고 협력 공격을 유도하세요
+
 전략적으로 행동하고, 한국어로 자연스럽게 대화하세요.`;
   }
 
@@ -83,11 +90,17 @@ ${roleDesc[player.role]}
       `[${m.playerName}] ${m.content}`
     ).join('\n');
 
+    // Highlight revealed mafia players
+    const revealedMafia = view.players.filter(p => p.role === 'mafia' && p.isIdentityRevealed && p.isAlive);
+    const revealedMafiaAlert = revealedMafia.length > 0
+      ? `\n🚨 정체가 공개된 마피아: ${revealedMafia.map(p => `${p.name}(체력:${p.health})`).join(', ')} — 누구나 공격 가능! 죽이면 체력+1 카드+2 보상!\n`
+      : '';
+
     let prompt = `현재 상태:
 턴: ${view.turnNumber}
 페이즈: ${phase}
 당신의 체력: ${player.health}/${player.maxHealth}
-${player.isArrested ? '⚠️ 체포 상태 (공격 불가)\n' : ''}
+${player.isArrested ? '⚠️ 체포 상태 (공격 불가)\n' : ''}${revealedMafiaAlert}
 플레이어:
 ${playerInfo}
 
@@ -116,10 +129,11 @@ ${recentChat || '(없음)'}
 
   private formatPlayers(players: ClientPlayerView[], self: Player): string {
     return players.map(p => {
+      const isRevealedMafia = p.role === 'mafia' && p.isIdentityRevealed;
       const role = p.role === 'unknown' ? '???' : this.roleToKo(p.role as any);
       const status = !p.isAlive ? '💀탈락' : `❤️${p.health}/${p.maxHealth}`;
       const arrested = p.isArrested ? ' [체포]' : '';
-      const revealed = p.isIdentityRevealed ? ' [공개]' : '';
+      const revealed = isRevealedMafia ? ' 🔴마피아[정체공개]=공격가능!' : (p.isIdentityRevealed ? ' [공개]' : '');
       const me = p.id === self.id ? ' (나)' : '';
       const publicCards = p.publicCards.length > 0
         ? ` 공격카드: ${p.publicCards.map(c => CARD_DEFS[c.cardId].nameKo).join(',')}`
