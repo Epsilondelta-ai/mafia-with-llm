@@ -187,8 +187,9 @@ export class CodeAI {
     }
 
     // Disrupt (only mafia can target police with interference cards)
-    const disruptCard = this.findCard(hand, ['arrest', 'seize', 'search']);
-    if (disruptCard) {
+    // Try each disrupt card type - don't give up if one can't find a valid target
+    const disruptCards = hand.filter(c => ['arrest', 'seize', 'search'].includes(c.cardId));
+    if (disruptCards.length > 0) {
       const targets = view.players.filter(p => {
         if (p.id === player.id || !p.isAlive) return false;
         // Only mafia can use interference cards against police
@@ -196,21 +197,24 @@ export class CodeAI {
         return true;
       });
       if (targets.length > 0) {
-        const target = this.pickRandom(targets);
-
-        // For seize, need to pick a public card
-        if (disruptCard.cardId === 'seize') {
-          const targetPublicCards = target.publicCards;
-          if (targetPublicCards.length > 0) {
-            return {
-              type: 'use_card',
-              playerId: player.id,
-              cardInstanceId: disruptCard.instanceId,
-              targetPlayerId: target.id,
-              targetCardInstanceId: targetPublicCards[0].instanceId,
-            };
+        for (const disruptCard of disruptCards) {
+          if (disruptCard.cardId === 'seize') {
+            // Seize needs a target with public attack cards
+            const seizeTarget = targets.find(t => t.publicCards.length > 0);
+            if (seizeTarget) {
+              return {
+                type: 'use_card',
+                playerId: player.id,
+                cardInstanceId: disruptCard.instanceId,
+                targetPlayerId: seizeTarget.id,
+                targetCardInstanceId: seizeTarget.publicCards[0].instanceId,
+              };
+            }
+            // No valid seize target, try next disrupt card
+            continue;
           }
-        } else {
+          // arrest or search - any target works
+          const target = this.pickRandom(targets);
           return {
             type: 'use_card',
             playerId: player.id,
