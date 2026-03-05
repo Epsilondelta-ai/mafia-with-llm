@@ -662,9 +662,15 @@ export class GameEngine {
     const alivePlayers = this.state.players.filter(p => p.isAlive);
     const alivePolice = alivePlayers.filter(p => p.role === 'police');
     const aliveMafia = alivePlayers.filter(p => p.role === 'mafia');
+    const aliveCitizens = alivePlayers.filter(p => p.role === 'citizen');
 
     // Mafia wins if police is eliminated
     if (alivePolice.length === 0) {
+      return 'mafia_team';
+    }
+
+    // Mafia wins if all citizens are dead (only police remain among non-mafia)
+    if (aliveCitizens.length === 0 && aliveMafia.length > 0) {
       return 'mafia_team';
     }
 
