@@ -38,8 +38,8 @@ function initSchema(): void {
   // Migration: add chat_log_json column for existing databases
   try {
     db.exec(`ALTER TABLE game_records ADD COLUMN chat_log_json TEXT NOT NULL DEFAULT '[]'`);
-  } catch {
-    // Column already exists, ignore
+  } catch (e: unknown) {
+    if (!(e instanceof Error) || !e.message.includes('duplicate column name')) throw e;
   }
 }
 

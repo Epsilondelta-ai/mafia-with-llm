@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import type { GameRecord, GameEvent, ChatMessage } from '@shared/types';
+import type { GameRecord } from '@shared/types';
 
 type GameRecordSummary = Omit<GameRecord, 'events' | 'chatLog'>;
 

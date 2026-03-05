@@ -58,6 +58,7 @@ export class GameEngine {
     this.emit('turn_start', this.currentPlayer().id, undefined, {
       message: `Turn ${this.state.turnNumber}: ${this.currentPlayer().name}'s turn`,
       messageKo: `턴 ${this.state.turnNumber}: ${this.currentPlayer().name}의 차례`,
+      data: { turnNumber: this.state.turnNumber },
     });
   }
 
@@ -710,6 +711,7 @@ export class GameEngine {
     this.emit('turn_start', this.currentPlayer().id, undefined, {
       message: `Turn ${this.state.turnNumber}: ${this.currentPlayer().name}'s turn`,
       messageKo: `턴 ${this.state.turnNumber}: ${this.currentPlayer().name}의 차례`,
+      data: { turnNumber: this.state.turnNumber },
     });
   }
 
