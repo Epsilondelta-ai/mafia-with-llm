@@ -23,7 +23,7 @@ export default function Lobby() {
   const [playerCount, setPlayerCount] = useState(5);
   const [playerName, setPlayerName] = useState('Player');
   const [aiConfigs, setAiConfigs] = useState<{ type: PlayerType; provider: LLMProvider }[]>(
-    Array(4).fill(null).map(() => ({ type: 'code_ai' as PlayerType, provider: 'ollama' as LLMProvider }))
+    Array(7).fill(null).map(() => ({ type: 'code_ai' as PlayerType, provider: 'ollama' as LLMProvider }))
   );
   const [spectateSpeed, setSpectateSpeed] = useState(2000);
   const [isCreating, setIsCreating] = useState(false);

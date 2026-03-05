@@ -42,6 +42,12 @@ const games = new Map<string, {
   spectateSpeed: number;
 }>();
 
+// Socket-to-player mapping for personalized views
+const socketPlayerMap = new Map<string, { gameId: string; playerId: string | null }>();
+
+// AI turn concurrency guard
+const aiRunning = new Set<string>();
+
 // Initialize DB
 getDb();
 
@@ -54,11 +60,12 @@ io.on('connection', (socket) => {
     const codeAI = new CodeAI();
     const llmPlayers = new Map<string, LLMPlayer>();
 
+    let gameId = '';
     const engine = new GameEngine(config, (event: GameEvent) => {
-      io.to(gameId).emit('game:event', event);
+      if (gameId) io.to(gameId).emit('game:event', event);
     });
 
-    const gameId = engine.getGameId();
+    gameId = engine.getGameId();
     currentGameId = gameId;
 
     // Set up AI players
@@ -75,6 +82,7 @@ io.on('connection', (socket) => {
 
     games.set(gameId, { engine, codeAI, llmPlayers, startedAt, spectateSpeed: config.spectateSpeed || 2000 });
     socket.join(gameId);
+    socketPlayerMap.set(socket.id, { gameId, playerId: myPlayerId });
 
     callback(gameId);
 
@@ -95,11 +103,12 @@ io.on('connection', (socket) => {
     const codeAI = new CodeAI();
     const llmPlayers = new Map<string, LLMPlayer>();
 
+    let gameId = '';
     const engine = new GameEngine(config, (event: GameEvent) => {
-      io.to(gameId).emit('game:event', event);
+      if (gameId) io.to(gameId).emit('game:event', event);
     });
 
-    const gameId = engine.getGameId();
+    gameId = engine.getGameId();
     currentGameId = gameId;
     myPlayerId = null;
 
@@ -113,6 +122,7 @@ io.on('connection', (socket) => {
 
     games.set(gameId, { engine, codeAI, llmPlayers, startedAt, spectateSpeed: config.spectateSpeed || 2000 });
     socket.join(gameId);
+    socketPlayerMap.set(socket.id, { gameId, playerId: null });
     callback(gameId);
     broadcastState(gameId);
 
@@ -158,50 +168,56 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    // Clean up if needed
+    socketPlayerMap.delete(socket.id);
   });
 });
 
 // ===== AI Turn Processing =====
 
 async function processAITurn(gameId: string): Promise<void> {
-  const game = games.get(gameId);
-  if (!game || game.engine.isGameOver()) return;
-
-  const engine = game.engine;
-  const state = engine.getState();
-  const currentPlayer = state.players[state.currentPlayerIndex];
-  const playerId = currentPlayer.id;
-  const view = engine.getClientView(playerId);
-
-  io.to(gameId).emit('game:ai_thinking', playerId);
-
-  const delay = state.mode === 'spectate' ? game.spectateSpeed : 500;
+  if (aiRunning.has(gameId)) return; // prevent concurrent AI turns
+  aiRunning.add(gameId);
 
   try {
-    if (currentPlayer.type === 'code_ai') {
-      await processCodeAITurn(game, engine, view, currentPlayer, gameId, delay);
-    } else if (currentPlayer.type === 'llm_ai') {
-      await processLLMAITurn(game, engine, view, currentPlayer, gameId, delay);
+    const game = games.get(gameId);
+    if (!game || game.engine.isGameOver()) return;
+
+    const engine = game.engine;
+    const state = engine.getState();
+    const currentPlayer = state.players[state.currentPlayerIndex];
+    const playerId = currentPlayer.id;
+    const view = engine.getClientView(playerId);
+
+    io.to(gameId).emit('game:ai_thinking', playerId);
+
+    const delay = state.mode === 'spectate' ? game.spectateSpeed : 500;
+
+    try {
+      if (currentPlayer.type === 'code_ai') {
+        await processCodeAITurn(game, engine, view, currentPlayer, gameId, delay);
+      } else if (currentPlayer.type === 'llm_ai') {
+        await processLLMAITurn(game, engine, view, currentPlayer, gameId, delay);
+      }
+    } catch (error) {
+      console.error('AI turn error:', error);
+      engine.processAction({ type: 'end_turn', playerId });
     }
-  } catch (error) {
-    console.error('AI turn error:', error);
-    // Fallback: end turn
-    engine.processAction({ type: 'end_turn', playerId });
-  }
 
-  io.to(gameId).emit('game:ai_done', playerId);
-  broadcastState(gameId);
+    io.to(gameId).emit('game:ai_done', playerId);
+    broadcastState(gameId);
 
-  if (engine.isGameOver()) {
-    handleGameOver(gameId);
-    return;
-  }
+    if (engine.isGameOver()) {
+      handleGameOver(gameId);
+      return;
+    }
 
-  // Continue with next AI player
-  const nextType = engine.getCurrentPlayerType();
-  if (nextType.type !== 'human') {
-    setTimeout(() => processAITurn(gameId), delay);
+    // Continue with next AI player
+    const nextType = engine.getCurrentPlayerType();
+    if (nextType.type !== 'human') {
+      setTimeout(() => processAITurn(gameId), delay);
+    }
+  } finally {
+    aiRunning.delete(gameId);
   }
 }
 
@@ -327,10 +343,10 @@ function broadcastState(gameId: string): void {
   const sockets = io.sockets.adapter.rooms.get(gameId);
   if (!sockets) return;
 
-  // For spectate mode, send full view (no hidden info for spectators)
-  // For play mode, send personalized views
   for (const socketId of sockets) {
-    const view = game.engine.getClientView(null); // spectator view
+    const mapping = socketPlayerMap.get(socketId);
+    const playerId = mapping?.playerId ?? null;
+    const view = game.engine.getClientView(playerId);
     io.to(socketId).emit('game:state', view);
   }
 }

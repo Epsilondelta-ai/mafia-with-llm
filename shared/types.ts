@@ -56,6 +56,7 @@ export interface Player {
   skipNextDraw: boolean; // snipe penalty
   usedSnipeThisTurn: boolean;
   usedAttackThisTurn: boolean;
+  hospitalUsedThisTurn: boolean;
 }
 
 // ===== Chat =====

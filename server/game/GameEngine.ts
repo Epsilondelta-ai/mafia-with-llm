@@ -337,6 +337,7 @@ export class GameEngine {
     // Reset turn-specific flags
     player.usedSnipeThisTurn = false;
     player.usedAttackThisTurn = false;
+    player.hospitalUsedThisTurn = false;
 
     this.emit('turn_end', playerId, undefined, {
       message: `${player.name}'s turn ends`,
@@ -385,6 +386,7 @@ export class GameEngine {
     if (!target || !target.isAlive) return { success: false, error: 'Invalid target' };
     if (player.isArrested) return { success: false, error: 'You are arrested - cannot attack' };
     if (player.usedSnipeThisTurn) return { success: false, error: 'Cannot use shot after snipe' };
+    if (player.hospitalUsedThisTurn) return { success: false, error: 'Cannot attack this turn (hospital)' };
 
     // Police can only attack revealed mafia
     if (player.role === 'police' && !(target.role === 'mafia' && target.isIdentityRevealed)) {
@@ -407,6 +409,7 @@ export class GameEngine {
     if (!target || !target.isAlive) return { success: false, error: 'Invalid target' };
     if (player.isArrested) return { success: false, error: 'You are arrested - cannot attack' };
     if (player.usedAttackThisTurn) return { success: false, error: 'Cannot use snipe after other attacks' };
+    if (player.hospitalUsedThisTurn) return { success: false, error: 'Cannot attack this turn (hospital)' };
 
     if (player.role === 'police' && !(target.role === 'mafia' && target.isIdentityRevealed)) {
       return { success: false, error: 'Police can only attack revealed mafia' };
@@ -445,7 +448,7 @@ export class GameEngine {
     if (player.usedAttackThisTurn) return { success: false, error: 'Cannot use hospital after attacking' };
 
     player.health = Math.min(player.health + 2, player.maxHealth);
-    player.usedAttackThisTurn = true; // prevents attacks this turn
+    player.hospitalUsedThisTurn = true;
 
     this.emit('player_healed', player.id, undefined, {
       message: `${player.name} goes to Hospital (+2 HP, no attacks this turn)`,
@@ -570,7 +573,7 @@ export class GameEngine {
       }
     }
 
-    // Reward: anyone killing mafia
+    // Reward: anyone killing mafia → +1 HP + 2 cards
     if (target.role === 'mafia') {
       attacker.health = Math.min(attacker.health + MAFIA_KILL_HEAL, attacker.maxHealth);
       const bonusCards = this.deck.draw(MAFIA_KILL_DRAW);
@@ -580,10 +583,8 @@ export class GameEngine {
         message: `${attacker.name} gets +${MAFIA_KILL_HEAL} HP and ${MAFIA_KILL_DRAW} cards for eliminating mafia!`,
         messageKo: `${attacker.name}이(가) 마피아 제거 보상: 체력 +${MAFIA_KILL_HEAL}, 카드 ${MAFIA_KILL_DRAW}장`,
       });
-    }
-
-    // Reward: revealed mafia killing anyone
-    if (attacker.role === 'mafia' && attacker.isIdentityRevealed) {
+    } else if (attacker.role === 'mafia' && attacker.isIdentityRevealed) {
+      // Reward: revealed mafia killing non-mafia → +1 HP + 2 cards
       attacker.health = Math.min(attacker.health + MAFIA_KILL_HEAL, attacker.maxHealth);
       const bonusCards = this.deck.draw(MAFIA_KILL_DRAW);
       attacker.hand.push(...bonusCards);
@@ -622,12 +623,6 @@ export class GameEngine {
       this.state.phase = 'draw';
     } else if (this.state.phase === 'draw' && this.state.turnPhaseComplete.draw) {
       this.state.phase = 'use_cards';
-      // Clear arrest at the start of card use phase (after surviving the penalty turn)
-      const player = this.currentPlayer();
-      if (player.isArrested) {
-        // Arrest lasts one turn cycle - clear it when their use_cards phase starts
-        // Actually arrest means can't attack next turn, so we clear it at start of their next turn
-      }
     }
   }
 
@@ -707,6 +702,7 @@ export class GameEngine {
       skipNextDraw: false,
       usedSnipeThisTurn: false,
       usedAttackThisTurn: false,
+      hospitalUsedThisTurn: false,
     }));
   }
 
