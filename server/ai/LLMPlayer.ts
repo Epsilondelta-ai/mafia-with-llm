@@ -3,6 +3,7 @@ import type {
 } from '../../shared/types.js';
 import type { AIProvider } from './types.js';
 import { CARD_DEFS } from '../game/constants.js';
+import { RULEBOOK } from './rulebook.js';
 
 export class LLMPlayer {
   private provider: AIProvider;
@@ -64,23 +65,12 @@ export class LLMPlayer {
 이름: ${player.name}
 ${roleDesc[player.role]}
 
-게임 규칙:
-- 턴마다: 채팅 → 카드 드로 → 카드 사용
-- 공격 카드(총격/저격)는 공개됨
-- 시민을 죽이면 체포됨 (다음 턴 공격 불가)
-- 마피아를 죽이면 체력 회복 + 카드 보상
-- 경찰에게 공격/방해 카드를 사용할 수 있는 것은 정체를 공개한 마피아만 가능
-- 경찰을 직접 공격하려면 정체를 공개해야 함
-- 💀탈락한 플레이어는 게임에서 완전히 제외됩니다. 대화, 질문, 카드 사용의 대상이 될 수 없습니다. 탈락자는 무시하세요.
+${RULEBOOK}
 
-⚠️ 정체 공개 시스템:
-- 마피아가 자발적으로 정체를 공개할 수 있음
+⚠️ 추가 지침:
 - 플레이어 목록에서 "🔴마피아[정체공개]"로 표시된 플레이어는 마피아임이 확인된 상태
-- 정체가 공개된 마피아는 모든 플레이어가 공격 가능
-- 정체가 공개된 마피아를 죽이면 체력+1 카드+2 보상
-- 채팅에서 정체가 공개된 마피아에 대해 적극적으로 언급하고 협력 공격을 유도하세요
-
-전략적으로 행동하고, 한국어로 자연스럽게 대화하세요.`;
+- 정체가 공개된 마피아가 있다면 채팅에서 적극적으로 언급하고 협력 공격을 유도하세요
+- 전략적으로 행동하고, 한국어로 자연스럽게 대화하세요.`;
   }
 
   private buildActionPrompt(view: ClientGameView, player: Player): string {
