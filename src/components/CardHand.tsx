@@ -16,7 +16,7 @@ interface Props {
   canUse: boolean;
   selectedCard: string | null;
   onSelectCard: (id: string | null) => void;
-  onUseCard: (cardInstanceId: string) => void;
+  onUseCard: (cardInstanceId: string, targetPlayerId?: string) => void;
   targetPlayers: ClientPlayerView[];
   selectedTarget: string | null;
   onSelectTarget: (id: string | null) => void;
@@ -76,7 +76,7 @@ export default function CardHand({ cards, canUse, selectedCard, onSelectCard, on
                 key={p.id}
                 onClick={() => {
                   onSelectTarget(p.id);
-                  onUseCard(selectedCard!);
+                  onUseCard(selectedCard!, p.id);
                 }}
                 className={`px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors ${
                   selectedTarget === p.id

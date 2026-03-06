@@ -426,11 +426,6 @@ export class GameEngine {
     if (player.usedSnipeThisTurn) return { success: false, error: 'Cannot use shot after snipe' };
     if (player.hospitalUsedThisTurn) return { success: false, error: 'Cannot attack this turn (hospital)' };
 
-    // Police can only attack revealed mafia
-    if (player.role === 'police' && !(target.role === 'mafia' && target.isIdentityRevealed)) {
-      return { success: false, error: 'Police can only attack revealed mafia' };
-    }
-
     // Only revealed mafia can attack police
     if (target.role === 'police' && !(player.role === 'mafia' && player.isIdentityRevealed)) {
       return { success: false, error: 'Only revealed mafia can attack police' };
@@ -453,10 +448,6 @@ export class GameEngine {
     if (player.isArrested) return { success: false, error: 'You are arrested - cannot attack' };
     if (player.usedAttackThisTurn) return { success: false, error: 'Cannot use snipe after other attacks' };
     if (player.hospitalUsedThisTurn) return { success: false, error: 'Cannot attack this turn (hospital)' };
-
-    if (player.role === 'police' && !(target.role === 'mafia' && target.isIdentityRevealed)) {
-      return { success: false, error: 'Police can only attack revealed mafia' };
-    }
 
     // Only revealed mafia can attack police
     if (target.role === 'police' && !(player.role === 'mafia' && player.isIdentityRevealed)) {

@@ -263,7 +263,7 @@ export default function Game() {
           canUse={isMyTurn && view.phase === 'use_cards'}
           selectedCard={selectedCard}
           onSelectCard={setSelectedCard}
-          onUseCard={(cardId) => handleUseCard(cardId, cardTarget || undefined)}
+          onUseCard={(cardId, targetId) => handleUseCard(cardId, targetId || cardTarget || undefined)}
           targetPlayers={view.players.filter(p => p.isAlive && p.id !== view.myPlayerId)}
           selectedTarget={cardTarget}
           onSelectTarget={setCardTarget}
