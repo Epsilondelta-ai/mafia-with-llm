@@ -206,6 +206,70 @@ export default function Lobby() {
       {/* AI config */}
       <div className="card-base">
         <label className="block text-sm font-medium text-mafia-muted mb-3">AI 플레이어 설정</label>
+
+        {/* Bulk apply */}
+        <div className="mb-4 p-3 bg-mafia-card/50 rounded-lg space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-mafia-gold font-medium w-14 shrink-0">전체</span>
+            <select
+              className="input-field text-sm py-1.5"
+              defaultValue=""
+              onChange={e => {
+                if (!e.target.value) return;
+                const type = e.target.value as PlayerType;
+                setAiConfigs(prev => prev.map(c => ({ ...c, type })));
+                e.target.value = '';
+              }}
+            >
+              <option value="">타입 일괄 변경</option>
+              <option value="code_ai">전체 코드 AI</option>
+              <option value="llm_ai">전체 LLM AI</option>
+            </select>
+          </div>
+          {aiConfigs.slice(0, aiSlots).some(c => c.type === 'llm_ai') && (
+            <div className="flex items-center gap-2 ml-16">
+              <select
+                className="input-field text-sm py-1.5"
+                defaultValue=""
+                onChange={e => {
+                  if (!e.target.value) return;
+                  const provider = e.target.value as LLMProvider;
+                  setAiConfigs(prev => prev.map(c =>
+                    c.type === 'llm_ai' ? { ...c, provider, model: '' } : c
+                  ));
+                  e.target.value = '';
+                }}
+              >
+                <option value="">프로바이더 일괄 변경</option>
+                {LLM_PROVIDERS.map(p => (
+                  <option key={p.value} value={p.value}>전체 {p.label}</option>
+                ))}
+              </select>
+              <select
+                className="input-field text-sm py-1.5"
+                defaultValue=""
+                onChange={e => {
+                  if (!e.target.value) return;
+                  const model = e.target.value;
+                  setAiConfigs(prev => prev.map(c =>
+                    c.type === 'llm_ai' ? { ...c, model } : c
+                  ));
+                  e.target.value = '';
+                }}
+              >
+                <option value="">모델 일괄 변경</option>
+                {(() => {
+                  const firstLlm = aiConfigs.slice(0, aiSlots).find(c => c.type === 'llm_ai');
+                  if (!firstLlm) return null;
+                  return PROVIDER_MODELS[firstLlm.provider].map(m => (
+                    <option key={m.value} value={m.value}>전체 {m.label}</option>
+                  ));
+                })()}
+              </select>
+            </div>
+          )}
+        </div>
+
         <div className="space-y-3">
           {Array.from({ length: aiSlots }, (_, i) => (
             <div key={i} className="space-y-1">
