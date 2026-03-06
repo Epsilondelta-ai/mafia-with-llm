@@ -7,5 +7,5 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
-const rulebookPath = resolve(import.meta.dirname, '../../RULEBOOK.md');
+const rulebookPath = resolve(import.meta.dirname, '../../docs/RULEBOOK.md');
 export const RULEBOOK = readFileSync(rulebookPath, 'utf-8').trim();
