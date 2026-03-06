@@ -61,16 +61,25 @@ export class LLMPlayer {
       mafia: '당신은 마피아입니다. 역할이 비공개입니다. 경찰을 제거하면 승리합니다. 다른 마피아가 누구인지 알고 있습니다. 시민인 척 행동하세요. 정체를 공개하면 카드 2장 보너스를 받고, 경찰을 직접 공격할 수 있으며, 누구든 죽이면 체력+1 카드+2 보상을 받습니다. 공격카드가 2장 이상이거나 경찰 체력이 낮으면 정체 공개를 적극 고려하세요!',
     };
 
+    const extraGuidelines = player.role === 'mafia'
+      ? `⚠️ 마피아 전략 지침:
+- 당신은 마피아입니다! 채팅에서 절대 마피아임을 드러내지 마세요.
+- 시민인 척 행동하며 다른 사람에게 의심을 돌리세요.
+- 마피아 동료를 공격하지 마세요.
+- 정체 공개 타이밍을 전략적으로 판단하세요 (공격카드 충분, 경찰 체력 낮을 때).
+- 한국어로 자연스럽게 대화하세요.`
+      : `⚠️ 추가 지침:
+- 플레이어 목록에서 "🔴마피아[정체공개]"로 표시된 플레이어는 마피아임이 확인된 상태
+- 정체가 공개된 마피아가 있다면 채팅에서 적극적으로 언급하고 협력 공격을 유도하세요
+- 전략적으로 행동하고, 한국어로 자연스럽게 대화하세요.`;
+
     return `당신은 마피아 카드게임의 AI 플레이어입니다.
 이름: ${player.name}
 ${roleDesc[player.role]}
 
 ${RULEBOOK}
 
-⚠️ 추가 지침:
-- 플레이어 목록에서 "🔴마피아[정체공개]"로 표시된 플레이어는 마피아임이 확인된 상태
-- 정체가 공개된 마피아가 있다면 채팅에서 적극적으로 언급하고 협력 공격을 유도하세요
-- 전략적으로 행동하고, 한국어로 자연스럽게 대화하세요.`;
+${extraGuidelines}`;
   }
 
   private buildActionPrompt(view: ClientGameView, player: Player): string {
@@ -87,7 +96,19 @@ ${RULEBOOK}
       ? `\n🚨 정체가 공개된 마피아: ${revealedMafia.map(p => `${p.name}(체력:${p.health})`).join(', ')} — 누구나 공격 가능! 죽이면 체력+1 카드+2 보상!\n`
       : '';
 
-    let prompt = `현재 상태:
+    // Role reminder at top of action prompt
+    let roleReminder = `[역할: ${this.roleToKo(player.role)}]`;
+    if (player.role === 'mafia') {
+      const allies = view.players.filter(p => p.role === 'mafia' && p.id !== player.id && p.isAlive);
+      if (allies.length > 0) {
+        roleReminder += ` 마피아 동료: ${allies.map(p => p.name).join(', ')}`;
+      }
+      roleReminder += ' — 시민인 척 행동하세요!';
+    }
+
+    let prompt = `${roleReminder}
+
+현재 상태:
 턴: ${view.turnNumber}
 페이즈: ${phase}
 당신의 체력: ${player.health}/${player.maxHealth}
