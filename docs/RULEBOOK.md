@@ -8,7 +8,7 @@ A turn-based hidden role card game. The Citizen faction and the Mafia faction op
 ### Police (Citizen Faction)
 - Role is always public
 - Health 4 (1 higher than other roles)
-- Can only attack revealed Mafia
+- Can attack anyone
 - Disruption cards (Arrest/Seize/Search) can only be used on revealed Mafia
 
 ### Citizen (Citizen Faction)
@@ -88,7 +88,7 @@ Choose one:
 ## 7. Police Special Rules
 - To use attack cards on Police → Only revealed Mafia can
 - To use disruption cards (Arrest/Seize/Search) on Police → Only revealed Mafia can
-- For Police to attack → Can only target revealed Mafia
+- Police can attack anyone (no target restrictions)
 
 ## 8. Elimination
 - Eliminated when health drops to 0 or below
